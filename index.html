@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrewMath - Homebrew Math That Holds Up</title>
+<meta name="description" content="Grain bill to original gravity with real efficiency, ABV from honest attenuation, strike water temp, mash and sparge volumes, priming sugar by carbonation, yeast pitch - numbers your brew day can stand on.">
+<link rel="canonical" href="https://ilanis-agent.github.io/brewmath/">
+<meta property="og:title" content="BrewMath - Homebrew Math That Holds Up">
+<meta property="og:description" content="Grain bill to original gravity with real efficiency, ABV from honest attenuation, strike water temp, mash and sparge volumes, priming sugar by carbonation, yeast pitch - numbers your brew day can stand on.">
+<meta property="og:url" content="https://ilanis-agent.github.io/brewmath/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#6b3f10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8D%BA%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#181007; --card:#241809; --ink:#f9efdd; --muted:#c9ad83;
+  --accent:#e8a33a; --accent2:#f2d06b; --line:#4d3517; --good:#8fd18a; --warn:#f2c14e; --bad:#e86a5a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:1rem}
+.wrap{max-width:760px;margin:0 auto}
+header{text-align:center;padding:1.6rem 0 1.2rem}
+h1{font-size:2.1rem;color:var(--accent2);letter-spacing:.5px}
+.tag{color:var(--muted);margin-top:.3rem;font-size:.98rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem;margin:1rem 0}
+.card h2{font-size:1.05rem;color:var(--accent);margin-bottom:.7rem}
+.row{display:flex;flex-wrap:wrap;gap:.9rem;align-items:flex-end;margin:.5rem 0}
+.field{display:flex;flex-direction:column;gap:.25rem}
+label{font-size:.8rem;color:var(--muted)}
+input,select{background:#120b04;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;font-size:1rem;width:8.5rem}
+input:focus,select:focus{outline:2px solid var(--accent)}
+button{background:var(--accent);color:#181007;border:0;border-radius:8px;padding:.5rem 1.1rem;font-size:.95rem;font-weight:700;cursor:pointer}
+button:hover{background:#f0b65c}
+.presets{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0 .2rem}
+.presets button{background:transparent;border:1px solid var(--line);color:var(--muted);font-weight:400;padding:.35rem .8rem;font-size:.85rem}
+.presets button:hover{border-color:var(--accent);color:var(--ink)}
+.big{font-size:1.3rem;font-weight:700;color:var(--accent2)}
+.result{margin-top:.6rem;font-size:1rem;min-height:1.4rem}
+.result small{color:var(--muted);display:block;margin-top:.25rem}
+.verdict-ok{color:var(--good)} .verdict-tight{color:var(--warn)} .verdict-bad{color:var(--bad)}
+.era{font-size:.85rem;color:var(--muted);margin-bottom:.6rem;font-style:italic}
+footer{margin:2rem 0 1rem;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:1rem}
+footer code{color:var(--accent)}
+details{margin-top:.4rem} summary{cursor:pointer;color:var(--muted);font-size:.85rem}
+table{border-collapse:collapse;margin-top:.5rem;font-size:.9rem}
+td,th{border:1px solid var(--line);padding:.3rem .6rem;text-align:left}
+th{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>&#127866; BrewMath</h1>
+<p class="tag">Homebrew math that holds up. Gravity, water, priming, pitch - numbers your brew day can stand on.</p>
+</header>
+
+<section class="card" id="c-bill">
+<h2>Grain bill to original gravity</h2>
+<p class="era">Points come from pounds times potential, times what your mash actually extracts. Nobody gets 100%.</p>
+<div class="presets" id="presets-bill"></div>
+<div class="row">
+  <div class="field"><label for="in-lbs">grain (lb)</label><input id="in-lbs" type="number" min="1" max="40" step="0.5" value="10"></div>
+  <div class="field"><label for="in-ppg">avg potential (ppg)</label>
+    <select id="in-ppg">
+      <option value="33">33 - Munich / dark base</option>
+      <option value="36" selected>36 - pale ale malt</option>
+      <option value="37">37 - pilsner malt</option>
+      <option value="38">38 - wheat malt</option>
+    </select>
+  </div>
+  <div class="field"><label for="in-eff">efficiency (%)</label><input id="in-eff" type="number" min="40" max="95" step="1" value="72"></div>
+  <div class="field"><label for="in-gal">batch (gal)</label><input id="in-gal" type="number" min="1" max="15" step="0.5" value="5"></div>
+</div>
+<button id="btn-bill">Gravity math</button>
+<div class="result" id="out-bill"></div>
+</section>
+
+<section class="card" id="c-abv">
+<h2>ABV from attenuation</h2>
+<p class="era">The yeast quits before the sugar does. Expect 70-80% attenuation from a typical ale strain, not the whole gravity.</p>
+<div class="row">
+  <div class="field"><label for="in-og">original gravity</label><input id="in-og" type="number" min="1.02" max="1.12" step="0.001" value="1.052"></div>
+  <div class="field"><label for="in-att">attenuation (%)</label><input id="in-att" type="number" min="50" max="95" step="1" value="75"></div>
+  <div class="field"><label for="in-fg">measured FG (opt)</label><input id="in-fg" type="number" min="0.99" max="1.06" step="0.001" placeholder="1.013"></div>
+</div>
+<button id="btn-abv">ABV math</button>
+<div class="result" id="out-abv"></div>
+</section>
+
+<section class="card" id="c-strike">
+<h2>Strike water temperature</h2>
+<p class="era">Cold grain steals heat. Palmer's formula tells you how hot the water must be to land the mash on target.</p>
+<div class="row">
+  <div class="field"><label for="in-masht">mash target (F)</label><input id="in-masht" type="number" min="140" max="170" step="1" value="152"></div>
+  <div class="field"><label for="in-slbs">grain (lb)</label><input id="in-slbs" type="number" min="1" max="40" step="0.5" value="10"></div>
+  <div class="field"><label for="in-sqt">mash water (qt)</label><input id="in-sqt" type="number" min="2" max="80" step="0.5" value="12.5"></div>
+  <div class="field"><label for="in-gt">grain temp (F)</label><input id="in-gt" type="number" min="32" max="100" step="1" value="70"></div>
+</div>
+<button id="btn-strike">Strike math</button>
+<div class="result" id="out-strike"></div>
+</section>
+
+<section class="card" id="c-water">
+<h2>Mash &amp; sparge volumes</h2>
+<p class="era">Grain keeps about an eighth of a gallon per pound. What leaves the mash tun decides how much you sparge.</p>
+<div class="row">
+  <div class="field"><label for="in-wlbs">grain (lb)</label><input id="in-wlbs" type="number" min="1" max="40" step="0.5" value="10"></div>
+  <div class="field"><label for="in-preboil">pre-boil (gal)</label><input id="in-preboil" type="number" min="1" max="20" step="0.5" value="6.5"></div>
+  <div class="field"><label for="in-ratio">ratio (qt/lb)</label><input id="in-ratio" type="number" min="0.8" max="2.5" step="0.05" value="1.25"></div>
+</div>
+<button id="btn-water">Water math</button>
+<div class="result" id="out-water"></div>
+</section>
+
+<section class="card" id="c-priming">
+<h2>Priming sugar</h2>
+<p class="era">Warm beer holds less CO2, so it needs more sugar. Carbonation is a target, not a guess - and there is a ceiling.</p>
+<div class="row">
+  <div class="field"><label for="in-pgal">beer (gal)</label><input id="in-pgal" type="number" min="1" max="15" step="0.5" value="5"></div>
+  <div class="field"><label for="in-vols">carbonation (vols)</label>
+    <select id="in-vols">
+      <option value="1.8">1.8 - English cask ale</option>
+      <option value="2.4" selected>2.4 - American ale</option>
+      <option value="2.6">2.6 - lager</option>
+      <option value="3.0">3.0 - Belgian / wheat</option>
+    </select>
+  </div>
+  <div class="field"><label for="in-ptemp">highest temp reached (F)</label><input id="in-ptemp" type="number" min="32" max="90" step="1" value="65"></div>
+</div>
+<button id="btn-priming">Priming math</button>
+<div class="result" id="out-priming"></div>
+</section>
+
+<section class="card" id="c-pitch">
+<h2>Yeast pitch</h2>
+<p class="era">Underpitching is the quiet cause of stalled ferments and off-flavors. Count the cells, not the hope.</p>
+<div class="row">
+  <div class="field"><label for="in-pog">original gravity</label><input id="in-pog" type="number" min="1.02" max="1.12" step="0.001" value="1.052"></div>
+  <div class="field"><label for="in-liters">batch (liters)</label><input id="in-liters" type="number" min="4" max="60" step="1" value="20"></div>
+  <div class="field"><label for="in-style">style</label>
+    <select id="in-style"><option value="ale" selected>Ale</option><option value="lager">Lager</option></select>
+  </div>
+</div>
+<button id="btn-pitch">Pitch math</button>
+<div class="result" id="out-pitch"></div>
+</section>
+
+<section class="card" id="c-why">
+<h2>Why these numbers</h2>
+<details><summary>The assumptions, stated honestly</summary>
+<table>
+<tr><th>Constant</th><th>Value</th><th>Why</th></tr>
+<tr><td>Malt potential</td><td>33-38 ppg</td><td>Points per pound per gallon from the maltster's spec sheets (Palmer)</td></tr>
+<tr><td>Efficiency</td><td>65-75% typical</td><td>What a home mash actually extracts; recipes claiming 90% flatter themselves</td></tr>
+<tr><td>Attenuation</td><td>70-80% typical ale</td><td>The yeast quits before the sugar does; the label number is the best case</td></tr>
+<tr><td>Strike water</td><td>Palmer: 0.2/R x (T2-T1) + T2</td><td>Grain at room temp pulls the water down; R is quarts per pound</td></tr>
+<tr><td>Grain absorption</td><td>0.125 gal/lb</td><td>What stays in the spent grain and never reaches the kettle</td></tr>
+<tr><td>Priming</td><td>15.195 g/gal/vol sucrose</td><td>Residual CO2 from the warmest the beer ever got; corn sugar needs 25% more by weight</td></tr>
+<tr><td>Pitch rate</td><td>0.75M ale / 1.5M lager cells/ml/degP</td><td>White Labs / Wyeast published guidance; a pack is about 100B cells</td></tr>
+</table>
+<p style="margin-top:.5rem;color:var(--muted);font-size:.85rem">Your thermometer, crush and mash pH all move these numbers. The hydrometer tells you the truth on brew day.</p>
+</details>
+</section>
+
+<footer>
+<p><strong>BrewMath</strong> - part of the App Factory collection. Honest small tools, one good idea at a time.</p>
+<p>Source: <code>engine.js</code> (pure functions, tested) &middot; <code>app.html</code> (this UI) &middot; <code>README.md</code></p>
+</footer>
+</div>
+</body>
+</html>
